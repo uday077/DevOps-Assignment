@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "my-wordpress-chart.wordpress.fullname" . }}
+  labels:
+    {{- include "my-wordpress-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: application
+    {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.wordpress.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "my-wordpress-chart.wordpress.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "my-wordpress-chart.wordpress.selectorLabels" . | nindent 8 }}
+        {{- with .Values.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      initContainers:
+      - name: wait-for-mysql
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          until nc -z -v -w30 {{ include "my-wordpress-chart.mysql.fullname" . }} {{ .Values.mysql.service.port }}
+          do
+            echo "Waiting for MySQL database connection..."
+            sleep 5
+          done
+          echo "MySQL is ready!"
+      containers:
+      - name: wordpress
+        image: "{{ .Values.wordpress.image.repository }}:{{ .Values.wordpress.image.tag }}"
+        imagePullPolicy: {{ .Values.wordpress.image.pullPolicy }}
+        env:
+        - name: WORDPRESS_DB_HOST
+          value: "{{ include "my-wordpress-chart.mysql.fullname" . }}:{{ .Values.mysql.service.port }}"
+        - name: WORDPRESS_DB_NAME
+          value: {{ .Values.mysql.database.name | quote }}
+        - name: WORDPRESS_DB_USER
+          value: {{ .Values.mysql.database.user | quote }}
+        - name: WORDPRESS_DB_PASSWORD
+          value: {{ .Values.mysql.database.password | quote }}
+        - name: WORDPRESS_TABLE_PREFIX
+          value: "wp_"
+        - name: WORDPRESS_DEBUG
+          value: "0"
+        ports:
+        - name: http
+          containerPort: {{ .Values.wordpress.service.targetPort }}
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /wp-admin/install.php
+            port: http
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+        readinessProbe:
+          httpGet:
+            path: /wp-admin/install.php
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        resources:
+          {{- toYaml .Values.wordpress.resources | nindent 10 }}
+        volumeMounts:
+        - name: wordpress-storage
+          mountPath: /var/www/html
+      volumes:
+      - name: wordpress-storage
+        emptyDir: {}
