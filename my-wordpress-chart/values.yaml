@@ -1,0 +1,59 @@
+# MySQL Configuration
+mysql:
+  image:
+    repository: mysql
+    tag: "8.0"
+    pullPolicy: IfNotPresent
+  
+  database:
+    name: wordpress_db
+    user: wordpress_user
+    password: wordpress_password_123
+    rootPassword: mysql_root_password_456
+  
+  service:
+    type: ClusterIP
+    port: 3306
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  
+  replicaCount: 1
+
+# WordPress Configuration
+wordpress:
+  image:
+    repository: wordpress
+    tag: "6.4-apache"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: NodePort
+    port: 80
+    targetPort: 80
+    nodePort: 30081
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  
+  replicaCount: 2
+
+# Common Labels
+labels:
+  app: wordpress
+  environment: local
+  managedBy: helm
+
+# Storage Configuration (ephemeral - emptyDir)
+storage:
+  type: emptyDir
