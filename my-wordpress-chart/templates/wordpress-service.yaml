@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "my-wordpress-chart.wordpress.fullname" . }}
+  labels:
+    {{- include "my-wordpress-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: application
+    {{- with .Values.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  type: {{ .Values.wordpress.service.type }}
+  ports:
+  - port: {{ .Values.wordpress.service.port }}
+    targetPort: {{ .Values.wordpress.service.targetPort }}
+    protocol: TCP
+    name: http
+    {{- if and (eq .Values.wordpress.service.type "NodePort") .Values.wordpress.service.nodePort }}
+    nodePort: {{ .Values.wordpress.service.nodePort }}
+    {{- end }}
+  selector:
+    {{- include "my-wordpress-chart.wordpress.selectorLabels" . | nindent 4 }}
