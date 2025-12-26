@@ -1,0 +1,15 @@
+apiVersion: v2
+name: my-wordpress-chart
+description: A custom Helm chart for WordPress with MySQL database
+type: application
+version: 1.0.0
+appVersion: "6.4"
+maintainers:
+  - name: DevOps Student
+    email: student@example.com
+keywords:
+  - wordpress
+  - mysql
+  - cms
+  - blog
+  - database
