@@ -34,6 +34,8 @@ Minikube: Download minikube-windows-amd64.exe, rename it to minikube.exe, and pl
 
 Helm: Download helm-v4.0.4-windows-amd64.zip, extract it, copy helm.exe, and place it inside the terraform/ folder.
 
+## 🏗️ Architecture Blueprint
+![Project Architecture](./architecture-diagram.png)
 
 ## 🚀 How to Run the Project
 
